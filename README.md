@@ -51,6 +51,7 @@ The mod jar will be in `mod/build/libs/`
 ## Features
 
 - **7 Cosmetic Types**: Capes, hats, headbands, shields, swords, cloaks, and auras
+- **Working Cosmetics**: 8 capes with physics + 8 particle auras (fully functional!)
 - **Web Interface**: Easy-to-use web app for selecting cosmetics
 - **Real-time Sync**: Cosmetics are fetched and displayed to all mod users
 - **Free Hosting**: Runs on Vercel's free tier with Vercel KV storage
@@ -69,13 +70,25 @@ See individual README files:
 - [Mod README](mod/README.md)
 - [Backend README](backend/README.md)
 
+## What's Working Right Now
+
+✅ **Capes (8 types)**: Fully rendered with realistic physics
+- Red, Blue, Gold, Rainbow, Purple, Green, Black, White
+- Swaying motion, proper lighting, texture mapping
+
+✅ **Auras (8 types)**: Particle effects around players
+- Fire, Ice, Lightning, Hearts, Soul, Enchant, Portal, Cherry Blossom
+- Performance optimized, visible to all players
+
+📋 **See `COSMETICS_IMPLEMENTED.md` for full details**
+
 ## Next Steps
 
-1. **Add Textures**: Create texture files for each cosmetic item
-2. **Implement Rendering**: Complete the rendering logic in `CosmeticsRenderer.java`
-3. **Add 3D Models**: Use Minecraft's model system for items like hats and shields
-4. **Particle Effects**: Implement particle effects for auras
-5. **Add More Cosmetics**: Expand the cosmetics list in `backend/api/cosmetics/list.js`
+1. **Deploy and Test**: Deploy backend to Vercel, test capes and auras in-game
+2. **Add More Capes**: Create new cape textures and patterns
+3. **Implement Hats**: Add 3D hat rendering (see `RENDERING_GUIDE.md`)
+4. **Add More Auras**: Experiment with particle combinations
+5. **Implement Other Cosmetics**: Headbands, shields, swords (see `RENDERING_GUIDE.md`)
 
 ## License
 

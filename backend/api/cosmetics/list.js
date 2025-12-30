@@ -15,7 +15,11 @@ export default async function handler(req, res) {
       { id: 'red_cape', name: 'Red Cape', description: 'A vibrant red cape' },
       { id: 'blue_cape', name: 'Blue Cape', description: 'A cool blue cape' },
       { id: 'gold_cape', name: 'Gold Cape', description: 'A luxurious gold cape' },
-      { id: 'rainbow_cape', name: 'Rainbow Cape', description: 'A colorful rainbow cape' }
+      { id: 'rainbow_cape', name: 'Rainbow Cape', description: 'A colorful rainbow striped cape' },
+      { id: 'purple_cape', name: 'Purple Cape', description: 'A royal purple cape' },
+      { id: 'green_cape', name: 'Green Cape', description: 'A nature green cape' },
+      { id: 'black_cape', name: 'Black Cape', description: 'A mysterious black cape' },
+      { id: 'white_cape', name: 'White Cape', description: 'A pure white cape' }
     ],
     hats: [
       { id: 'top_hat', name: 'Top Hat', description: 'A classy top hat' },
@@ -43,9 +47,13 @@ export default async function handler(req, res) {
     ],
     auras: [
       { id: 'fire_aura', name: 'Fire Aura', description: 'Flames surrounding you' },
-      { id: 'ice_aura', name: 'Ice Aura', description: 'Frost particles around you' },
-      { id: 'lightning_aura', name: 'Lightning Aura', description: 'Electric sparks' },
-      { id: 'hearts_aura', name: 'Hearts Aura', description: 'Floating hearts' }
+      { id: 'ice_aura', name: 'Ice Aura', description: 'Snowflakes falling around you' },
+      { id: 'lightning_aura', name: 'Lightning Aura', description: 'Electric sparks crackling' },
+      { id: 'hearts_aura', name: 'Hearts Aura', description: 'Floating hearts' },
+      { id: 'soul_aura', name: 'Soul Aura', description: 'Blue soul fire flames' },
+      { id: 'enchant_aura', name: 'Enchant Aura', description: 'Magical enchantment particles' },
+      { id: 'portal_aura', name: 'Portal Aura', description: 'Swirling portal particles' },
+      { id: 'cherry_aura', name: 'Cherry Blossom Aura', description: 'Falling cherry blossom petals' }
     ]
   };
 

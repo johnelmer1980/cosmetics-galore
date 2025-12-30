@@ -2,9 +2,20 @@ package com.capesmod.client;
 
 import com.capesmod.CapesMod;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.feature.CapeFeatureRenderer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RotationAxis;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 public class CosmeticsRenderer {
 
@@ -54,10 +65,74 @@ public class CosmeticsRenderer {
 
 	private static void renderCape(AbstractClientPlayerEntity player, MatrixStack matrices,
 								   VertexConsumerProvider vertexConsumers, int light, String capeId) {
-		// TODO: Implement cape rendering
-		// This will use a custom cape texture based on the capeId
-		// You'll need to load textures and render them on the player's back
-		CapesMod.LOGGER.debug("Rendering cape: {} for player {}", capeId, player.getName().getString());
+		// Get custom cape texture
+		Identifier capeTexture = Identifier.of("capesmod", "textures/entity/capes/" + capeId + ".png");
+
+		// Calculate cape movement
+		double deltaX = player.getX() - player.prevX;
+		double deltaZ = player.getZ() - player.prevZ;
+		double deltaY = player.getY() - player.prevY;
+
+		float bodyYaw = player.prevBodyYaw + (player.bodyYaw - player.prevBodyYaw);
+		double sinYaw = MathHelper.sin(bodyYaw * 0.017453292F);
+		double cosYaw = -MathHelper.cos(bodyYaw * 0.017453292F);
+		float capeY = (float) deltaY * 10.0F;
+		capeY = MathHelper.clamp(capeY, -6.0F, 32.0F);
+		float capeSwing = (float) (deltaX * cosYaw + deltaZ * sinYaw) * 100.0F;
+		capeSwing = MathHelper.clamp(capeSwing, 0.0F, 150.0F);
+		float capeStretch = (float) (deltaX * sinYaw - deltaZ * cosYaw) * 100.0F;
+		capeStretch = MathHelper.clamp(capeStretch, -20.0F, 20.0F);
+
+		if (capeSwing < 0.0F) {
+			capeSwing = 0.0F;
+		}
+
+		float cameraPitch = player.prevCapeY + (player.capeY - player.prevCapeY);
+		capeY += MathHelper.sin((player.prevHorizontalSpeed + (player.horizontalSpeed - player.prevHorizontalSpeed)) * 6.0F) * 32.0F * cameraPitch;
+
+		matrices.push();
+		matrices.translate(0.0F, 0.0F, 0.125F);
+		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(6.0F + capeSwing / 2.0F + capeY));
+		matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(capeStretch / 2.0F));
+		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - capeStretch / 2.0F));
+
+		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntitySolid(capeTexture));
+		MatrixStack.Entry entry = matrices.peek();
+		Matrix4f positionMatrix = entry.getPositionMatrix();
+		Matrix3f normalMatrix = entry.getNormalMatrix();
+
+		// Render cape geometry
+		for (int part = 0; part < 16; ++part) {
+			float y1 = (float) part / 16.0F;
+			float y2 = (float) (part + 1) / 16.0F;
+			float z1 = y1 * 0.0625F;
+			float z2 = y2 * 0.0625F;
+
+			// Front face
+			vertex(vertexConsumer, positionMatrix, normalMatrix, light, -0.15625F, -y1, z1, 0.0F, y1);
+			vertex(vertexConsumer, positionMatrix, normalMatrix, light, 0.15625F, -y1, z1, 0.09375F, y1);
+			vertex(vertexConsumer, positionMatrix, normalMatrix, light, 0.15625F, -y2, z2, 0.09375F, y2);
+			vertex(vertexConsumer, positionMatrix, normalMatrix, light, -0.15625F, -y2, z2, 0.0F, y2);
+
+			// Back face
+			vertex(vertexConsumer, positionMatrix, normalMatrix, light, 0.15625F, -y1, z1, 0.09375F, y1);
+			vertex(vertexConsumer, positionMatrix, normalMatrix, light, -0.15625F, -y1, z1, 0.0F, y1);
+			vertex(vertexConsumer, positionMatrix, normalMatrix, light, -0.15625F, -y2, z2, 0.0F, y2);
+			vertex(vertexConsumer, positionMatrix, normalMatrix, light, 0.15625F, -y2, z2, 0.09375F, y2);
+		}
+
+		matrices.pop();
+	}
+
+	private static void vertex(VertexConsumer vertexConsumer, Matrix4f positionMatrix, Matrix3f normalMatrix,
+							   int light, float x, float y, float z, float u, float v) {
+		vertexConsumer.vertex(positionMatrix, x, y, z)
+				.color(255, 255, 255, 255)
+				.texture(u, v)
+				.overlay(OverlayTexture.DEFAULT_UV)
+				.light(light)
+				.normal(normalMatrix, 0.0F, 1.0F, 0.0F)
+				.next();
 	}
 
 	private static void renderHat(AbstractClientPlayerEntity player, MatrixStack matrices,
@@ -93,7 +168,154 @@ public class CosmeticsRenderer {
 
 	private static void renderAura(AbstractClientPlayerEntity player, MatrixStack matrices,
 								   VertexConsumerProvider vertexConsumers, int light, String auraId) {
-		// TODO: Implement aura rendering (particle effects around player)
-		CapesMod.LOGGER.debug("Rendering aura: {} for player {}", auraId, player.getName().getString());
+		World world = player.getWorld();
+		if (world == null) return;
+
+		// Only spawn particles every few ticks to avoid lag
+		if (world.getTime() % 4 != 0) return;
+
+		Vec3d pos = player.getPos();
+		double x = pos.x;
+		double y = pos.y + 1.0;
+		double z = pos.z;
+
+		switch (auraId) {
+			case "fire_aura":
+				// Flame particles in a circle around player
+				for (int i = 0; i < 2; i++) {
+					double angle = Math.random() * Math.PI * 2;
+					double radius = 0.4 + Math.random() * 0.3;
+					double offsetX = Math.cos(angle) * radius;
+					double offsetZ = Math.sin(angle) * radius;
+					double offsetY = (Math.random() - 0.5) * 1.5;
+
+					world.addParticle(
+						ParticleTypes.FLAME,
+						x + offsetX, y + offsetY, z + offsetZ,
+						0, 0.02, 0
+					);
+				}
+				break;
+
+			case "ice_aura":
+				// Snowflake particles falling around player
+				for (int i = 0; i < 2; i++) {
+					double offsetX = (Math.random() - 0.5) * 0.8;
+					double offsetZ = (Math.random() - 0.5) * 0.8;
+					double offsetY = Math.random() * 1.5;
+
+					world.addParticle(
+						ParticleTypes.SNOWFLAKE,
+						x + offsetX, y + offsetY, z + offsetZ,
+						0, -0.05, 0
+					);
+				}
+				break;
+
+			case "lightning_aura":
+				// Electric sparks
+				for (int i = 0; i < 3; i++) {
+					double offsetX = (Math.random() - 0.5) * 0.6;
+					double offsetZ = (Math.random() - 0.5) * 0.6;
+					double offsetY = Math.random() * 1.8;
+
+					world.addParticle(
+						ParticleTypes.ELECTRIC_SPARK,
+						x + offsetX, y + offsetY, z + offsetZ,
+						(Math.random() - 0.5) * 0.05,
+						(Math.random() - 0.5) * 0.05,
+						(Math.random() - 0.5) * 0.05
+					);
+				}
+				break;
+
+			case "hearts_aura":
+				// Heart particles floating up
+				if (world.getTime() % 8 == 0) {
+					double offsetX = (Math.random() - 0.5) * 0.6;
+					double offsetZ = (Math.random() - 0.5) * 0.6;
+
+					world.addParticle(
+						ParticleTypes.HEART,
+						x + offsetX, y, z + offsetZ,
+						0, 0.1, 0
+					);
+				}
+				break;
+
+			case "soul_aura":
+				// Soul fire flame particles (blue flames)
+				for (int i = 0; i < 2; i++) {
+					double angle = Math.random() * Math.PI * 2;
+					double radius = 0.4 + Math.random() * 0.3;
+					double offsetX = Math.cos(angle) * radius;
+					double offsetZ = Math.sin(angle) * radius;
+					double offsetY = (Math.random() - 0.5) * 1.5;
+
+					world.addParticle(
+						ParticleTypes.SOUL_FIRE_FLAME,
+						x + offsetX, y + offsetY, z + offsetZ,
+						0, 0.02, 0
+					);
+				}
+				break;
+
+			case "enchant_aura":
+				// Enchantment table particles
+				for (int i = 0; i < 3; i++) {
+					double offsetX = (Math.random() - 0.5) * 0.8;
+					double offsetZ = (Math.random() - 0.5) * 0.8;
+					double offsetY = Math.random() * 1.5;
+
+					world.addParticle(
+						ParticleTypes.ENCHANT,
+						x + offsetX, y + offsetY, z + offsetZ,
+						(Math.random() - 0.5) * 0.5,
+						0.1,
+						(Math.random() - 0.5) * 0.5
+					);
+				}
+				break;
+
+			case "portal_aura":
+				// Portal particles swirling
+				for (int i = 0; i < 2; i++) {
+					double angle = (world.getTime() * 0.1 + Math.random() * 2) % (Math.PI * 2);
+					double radius = 0.5;
+					double offsetX = Math.cos(angle) * radius;
+					double offsetZ = Math.sin(angle) * radius;
+					double offsetY = Math.random() * 1.8;
+
+					world.addParticle(
+						ParticleTypes.PORTAL,
+						x + offsetX, y + offsetY, z + offsetZ,
+						-offsetX * 0.1,
+						0,
+						-offsetZ * 0.1
+					);
+				}
+				break;
+
+			case "cherry_aura":
+				// Cherry blossom petals
+				if (world.getTime() % 6 == 0) {
+					double offsetX = (Math.random() - 0.5) * 0.8;
+					double offsetZ = (Math.random() - 0.5) * 0.8;
+					double offsetY = Math.random() * 2.0;
+
+					world.addParticle(
+						ParticleTypes.CHERRY_LEAVES,
+						x + offsetX, y + offsetY, z + offsetZ,
+						(Math.random() - 0.5) * 0.05,
+						-0.03,
+						(Math.random() - 0.5) * 0.05
+					);
+				}
+				break;
+
+			default:
+				CapesMod.LOGGER.debug("Unknown aura type: {}", auraId);
+				break;
+		}
 	}
 }
