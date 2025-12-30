@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capes Mod - Cosmetics Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .username-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .username-input {
+            padding: 12px 20px;
+            font-size: 1.1em;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .cosmetics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .cosmetic-category {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .category-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 15px;
+            text-transform: capitalize;
+            font-weight: bold;
+        }
+
+        .cosmetic-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cosmetic-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .cosmetic-item.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .cosmetic-item h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .cosmetic-item p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .save-section {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .save-btn {
+            padding: 15px 50px;
+            font-size: 1.2em;
+            background: #28a745;
+        }
+
+        .save-btn:hover {
+            background: #218838;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .none-option {
+            background: #ffe6e6;
+        }
+
+        .none-option.selected {
+            background: #ffcccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Capes Mod</h1>
+        <p class="subtitle">Customize your Minecraft character with awesome cosmetics!</p>
+
+        <div class="username-section">
+            <input type="text" id="username" class="username-input" placeholder="Enter Minecraft Username">
+            <button onclick="loadCosmetics()" class="btn">Load My Cosmetics</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading cosmetics...</p>
+        </div>
+
+        <div id="cosmetics-container"></div>
+
+        <div class="save-section">
+            <button onclick="saveCosmetics()" class="btn save-btn" id="save-btn">Save Cosmetics</button>
+        </div>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        let availableCosmetics = {};
+        let selectedCosmetics = {
+            cape: null,
+            hat: null,
+            headband: null,
+            shield: null,
+            sword: null,
+            cloak: null,
+            aura: null
+        };
+
+        async function loadAvailableCosmetics() {
+            try {
+                const response = await fetch('/api/cosmetics/list');
+                availableCosmetics = await response.json();
+                renderCosmetics();
+            } catch (error) {
+                showMessage('Failed to load available cosmetics', 'error');
+            }
+        }
+
+        async function loadCosmetics() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                showMessage('Please enter a username', 'error');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch(`/api/cosmetics/${username}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    selectedCosmetics = {
+                        cape: data.cape,
+                        hat: data.hat,
+                        headband: data.headband,
+                        shield: data.shield,
+                        sword: data.sword,
+                        cloak: data.cloak,
+                        aura: data.aura
+                    };
+                    renderCosmetics();
+                    showMessage('Cosmetics loaded successfully!', 'success');
+                }
+            } catch (error) {
+                // User might not have cosmetics yet, that's okay
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function renderCosmetics() {
+            const container = document.getElementById('cosmetics-container');
+            container.innerHTML = '';
+            container.className = 'cosmetics-grid';
+
+            for (const [category, items] of Object.entries(availableCosmetics)) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'cosmetic-category';
+
+                const categoryName = category.replace(/s$/, ''); // Remove plural 's'
+                categoryDiv.innerHTML = `<div class="category-title">${category}</div>`;
+
+                // Add "None" option
+                const noneDiv = document.createElement('div');
+                noneDiv.className = 'cosmetic-item none-option';
+                noneDiv.innerHTML = `<h4>None</h4><p>No ${categoryName}</p>`;
+                if (!selectedCosmetics[categoryName]) {
+                    noneDiv.classList.add('selected');
+                }
+                noneDiv.onclick = () => selectCosmetic(categoryName, null);
+                categoryDiv.appendChild(noneDiv);
+
+                // Add cosmetic items
+                items.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'cosmetic-item';
+                    itemDiv.innerHTML = `
+                        <h4>${item.name}</h4>
+                        <p>${item.description}</p>
+                    `;
+                    if (selectedCosmetics[categoryName] === item.id) {
+                        itemDiv.classList.add('selected');
+                    }
+                    itemDiv.onclick = () => selectCosmetic(categoryName, item.id);
+                    categoryDiv.appendChild(itemDiv);
+                });
+
+                container.appendChild(categoryDiv);
+            }
+        }
+
+        function selectCosmetic(category, id) {
+            selectedCosmetics[category] = id;
+            renderCosmetics();
+        }
+
+        async function saveCosmetics() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                showMessage('Please enter a username', 'error');
+                return;
+            }
+
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch('/api/cosmetics/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        ...selectedCosmetics
+                    })
+                });
+
+                if (response.ok) {
+                    showMessage('Cosmetics saved successfully! They will appear in-game.', 'success');
+                } else {
+                    showMessage('Failed to save cosmetics', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to save cosmetics', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Cosmetics';
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load available cosmetics on page load
+        loadAvailableCosmetics();
+    </script>
+</body>
+</html>

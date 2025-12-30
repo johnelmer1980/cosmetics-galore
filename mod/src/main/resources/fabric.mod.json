@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "capesmod",
+	"version": "${version}",
+	"name": "Capes Mod",
+	"description": "Add custom cosmetics to your Minecraft character",
+	"authors": [
+		"Your Name"
+	],
+	"contact": {
+		"homepage": "https://yourwebsite.com",
+		"sources": "https://github.com/yourusername/capes-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/capesmod/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.capesmod.CapesMod"
+		],
+		"client": [
+			"com.capesmod.client.CapesModClient"
+		]
+	},
+	"mixins": [
+		"capesmod.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
