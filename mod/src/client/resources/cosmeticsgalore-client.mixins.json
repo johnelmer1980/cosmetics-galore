@@ -2,7 +2,8 @@
 	"required": true,
 	"package": "com.cosmeticsgalore.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"mixins": [
+	"client": [
+		"PlayerEntityRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
