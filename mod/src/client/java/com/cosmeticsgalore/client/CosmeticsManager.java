@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 
 public class CosmeticsManager {
-	private static final String API_URL = "https://your-vercel-app.vercel.app/api/cosmetics";
+	private static final String API_URL = "https://cosmetics-galore.vercel.app/api/cosmetics";
 	private static final HttpClient httpClient = HttpClient.newHttpClient();
 	private static final Gson gson = new Gson();
 	private static final Map<UUID, PlayerCosmetics> cosmeticsCache = new ConcurrentHashMap<>();
