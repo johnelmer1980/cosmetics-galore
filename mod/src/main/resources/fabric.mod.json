@@ -23,11 +23,7 @@
 		]
 	},
 	"mixins": [
-		"cosmeticsgalore.mixins.json",
-		{
-			"config": "cosmeticsgalore-client.mixins.json",
-			"environment": "client"
-		}
+		"cosmeticsgalore.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.0",
