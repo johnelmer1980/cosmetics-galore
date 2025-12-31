@@ -1,6 +1,6 @@
-package com.capesmod.client;
+package com.cosmeticsgalore.client;
 
-import com.capesmod.CapesMod;
+import com.cosmeticsgalore.CosmeticsGalore;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
@@ -66,7 +66,7 @@ public class CosmeticsRenderer {
 	private static void renderCape(AbstractClientPlayerEntity player, MatrixStack matrices,
 								   VertexConsumerProvider vertexConsumers, int light, String capeId) {
 		// Get custom cape texture
-		Identifier capeTexture = Identifier.of("capesmod", "textures/entity/capes/" + capeId + ".png");
+		Identifier capeTexture = Identifier.of("cosmeticsgalore", "textures/entity/capes/" + capeId + ".png");
 
 		// Calculate cape movement
 		double deltaX = player.getX() - player.prevX;
@@ -139,31 +139,31 @@ public class CosmeticsRenderer {
 								  VertexConsumerProvider vertexConsumers, int light, String hatId) {
 		// TODO: Implement hat rendering
 		// This will render a 3D model or texture on the player's head
-		CapesMod.LOGGER.debug("Rendering hat: {} for player {}", hatId, player.getName().getString());
+		CosmeticsGalore.LOGGER.debug("Rendering hat: {} for player {}", hatId, player.getName().getString());
 	}
 
 	private static void renderHeadband(AbstractClientPlayerEntity player, MatrixStack matrices,
 									   VertexConsumerProvider vertexConsumers, int light, String headbandId) {
 		// TODO: Implement headband rendering
-		CapesMod.LOGGER.debug("Rendering headband: {} for player {}", headbandId, player.getName().getString());
+		CosmeticsGalore.LOGGER.debug("Rendering headband: {} for player {}", headbandId, player.getName().getString());
 	}
 
 	private static void renderShield(AbstractClientPlayerEntity player, MatrixStack matrices,
 									 VertexConsumerProvider vertexConsumers, int light, String shieldId) {
 		// TODO: Implement shield rendering (on back or side)
-		CapesMod.LOGGER.debug("Rendering shield: {} for player {}", shieldId, player.getName().getString());
+		CosmeticsGalore.LOGGER.debug("Rendering shield: {} for player {}", shieldId, player.getName().getString());
 	}
 
 	private static void renderSword(AbstractClientPlayerEntity player, MatrixStack matrices,
 									VertexConsumerProvider vertexConsumers, int light, String swordId) {
 		// TODO: Implement sword rendering (sheathed on hip)
-		CapesMod.LOGGER.debug("Rendering sword: {} for player {}", swordId, player.getName().getString());
+		CosmeticsGalore.LOGGER.debug("Rendering sword: {} for player {}", swordId, player.getName().getString());
 	}
 
 	private static void renderCloak(AbstractClientPlayerEntity player, MatrixStack matrices,
 									VertexConsumerProvider vertexConsumers, int light, String cloakId) {
 		// TODO: Implement cloak rendering (similar to cape but different style)
-		CapesMod.LOGGER.debug("Rendering cloak: {} for player {}", cloakId, player.getName().getString());
+		CosmeticsGalore.LOGGER.debug("Rendering cloak: {} for player {}", cloakId, player.getName().getString());
 	}
 
 	private static void renderAura(AbstractClientPlayerEntity player, MatrixStack matrices,
@@ -314,7 +314,7 @@ public class CosmeticsRenderer {
 				break;
 
 			default:
-				CapesMod.LOGGER.debug("Unknown aura type: {}", auraId);
+				CosmeticsGalore.LOGGER.debug("Unknown aura type: {}", auraId);
 				break;
 		}
 	}

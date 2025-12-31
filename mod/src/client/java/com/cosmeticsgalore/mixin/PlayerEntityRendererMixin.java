@@ -1,7 +1,7 @@
-package com.capesmod.mixin;
+package com.cosmeticsgalore.mixin;
 
-import com.capesmod.client.CosmeticsManager;
-import com.capesmod.client.CosmeticsRenderer;
+import com.cosmeticsgalore.client.CosmeticsManager;
+import com.cosmeticsgalore.client.CosmeticsRenderer;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;

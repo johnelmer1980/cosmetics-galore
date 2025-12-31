@@ -1,6 +1,6 @@
-package com.capesmod.client;
+package com.cosmeticsgalore.client;
 
-import com.capesmod.CapesMod;
+import com.cosmeticsgalore.CosmeticsGalore;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -20,7 +20,7 @@ public class CosmeticsManager {
 	private static final Map<UUID, PlayerCosmetics> cosmeticsCache = new ConcurrentHashMap<>();
 
 	public static void initialize() {
-		CapesMod.LOGGER.info("Cosmetics Manager initialized");
+		CosmeticsGalore.LOGGER.info("Cosmetics Manager initialized");
 	}
 
 	public static void fetchCosmetics(UUID playerUuid, String username) {
@@ -37,15 +37,15 @@ public class CosmeticsManager {
 								JsonObject json = gson.fromJson(response.body(), JsonObject.class);
 								PlayerCosmetics cosmetics = parseCosmetics(json);
 								cosmeticsCache.put(playerUuid, cosmetics);
-								CapesMod.LOGGER.info("Loaded cosmetics for {}", username);
+								CosmeticsGalore.LOGGER.info("Loaded cosmetics for {}", username);
 							}
 						})
 						.exceptionally(e -> {
-							CapesMod.LOGGER.error("Failed to fetch cosmetics for {}: {}", username, e.getMessage());
+							CosmeticsGalore.LOGGER.error("Failed to fetch cosmetics for {}: {}", username, e.getMessage());
 							return null;
 						});
 			} catch (Exception e) {
-				CapesMod.LOGGER.error("Error fetching cosmetics: {}", e.getMessage());
+				CosmeticsGalore.LOGGER.error("Error fetching cosmetics: {}", e.getMessage());
 			}
 		});
 	}

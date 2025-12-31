@@ -1,29 +1,29 @@
 {
 	"schemaVersion": 1,
-	"id": "capesmod",
+	"id": "cosmeticsgalore",
 	"version": "${version}",
-	"name": "Capes Mod",
-	"description": "Add custom cosmetics to your Minecraft character",
+	"name": "Cosmetics Galore",
+	"description": "Add custom cosmetics to your Minecraft character - capes, auras, and more!",
 	"authors": [
 		"Your Name"
 	],
 	"contact": {
 		"homepage": "https://yourwebsite.com",
-		"sources": "https://github.com/yourusername/capes-mod"
+		"sources": "https://github.com/johnelmer1980/cosmetics-galore"
 	},
 	"license": "MIT",
-	"icon": "assets/capesmod/icon.png",
+	"icon": "assets/cosmeticsgalore/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.capesmod.CapesMod"
+			"com.cosmeticsgalore.CosmeticsGalore"
 		],
 		"client": [
-			"com.capesmod.client.CapesModClient"
+			"com.cosmeticsgalore.client.CosmeticsGaloreClient"
 		]
 	},
 	"mixins": [
-		"capesmod.mixins.json"
+		"cosmeticsgalore.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.0",

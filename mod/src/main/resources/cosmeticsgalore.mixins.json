@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "com.capesmod.mixin",
+	"package": "com.cosmeticsgalore.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 	],

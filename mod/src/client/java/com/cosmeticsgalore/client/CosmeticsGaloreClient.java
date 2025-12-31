@@ -1,14 +1,14 @@
-package com.capesmod.client;
+package com.cosmeticsgalore.client;
 
-import com.capesmod.CapesMod;
+import com.cosmeticsgalore.CosmeticsGalore;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
-public class CapesModClient implements ClientModInitializer {
+public class CosmeticsGaloreClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		CapesMod.LOGGER.info("Capes Mod Client initialized!");
+		CosmeticsGalore.LOGGER.info("Cosmetics Galore Client initialized!");
 
 		// Initialize cosmetics manager
 		CosmeticsManager.initialize();
