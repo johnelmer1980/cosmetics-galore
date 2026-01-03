@@ -53,25 +53,25 @@ public class CosmeticsManager {
 	private static PlayerCosmetics parseCosmetics(JsonObject json) {
 		PlayerCosmetics cosmetics = new PlayerCosmetics();
 
-		if (json.has("cape")) {
+		if (json.has("cape") && !json.get("cape").isJsonNull()) {
 			cosmetics.cape = json.get("cape").getAsString();
 		}
-		if (json.has("hat")) {
+		if (json.has("hat") && !json.get("hat").isJsonNull()) {
 			cosmetics.hat = json.get("hat").getAsString();
 		}
-		if (json.has("headband")) {
+		if (json.has("headband") && !json.get("headband").isJsonNull()) {
 			cosmetics.headband = json.get("headband").getAsString();
 		}
-		if (json.has("shield")) {
+		if (json.has("shield") && !json.get("shield").isJsonNull()) {
 			cosmetics.shield = json.get("shield").getAsString();
 		}
-		if (json.has("sword")) {
+		if (json.has("sword") && !json.get("sword").isJsonNull()) {
 			cosmetics.sword = json.get("sword").getAsString();
 		}
-		if (json.has("cloak")) {
+		if (json.has("cloak") && !json.get("cloak").isJsonNull()) {
 			cosmetics.cloak = json.get("cloak").getAsString();
 		}
-		if (json.has("aura")) {
+		if (json.has("aura") && !json.get("aura").isJsonNull()) {
 			cosmetics.aura = json.get("aura").getAsString();
 		}
 
