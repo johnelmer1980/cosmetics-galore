@@ -87,7 +87,7 @@ public class CosmeticsRenderer {
 			capeSwing = 0.0F;
 		}
 
-		float cameraPitch = player.prevCapeY + (player.capeY - player.prevCapeY);
+		float cameraPitch = (float)(player.prevCapeY + (player.capeY - player.prevCapeY));
 		capeY += MathHelper.sin((player.prevHorizontalSpeed + (player.horizontalSpeed - player.prevHorizontalSpeed)) * 6.0F) * 32.0F * cameraPitch;
 
 		matrices.push();
@@ -131,8 +131,7 @@ public class CosmeticsRenderer {
 				.texture(u, v)
 				.overlay(OverlayTexture.DEFAULT_UV)
 				.light(light)
-				.normal(normalMatrix, 0.0F, 1.0F, 0.0F)
-				.next();
+				.normal(normalMatrix.m00, normalMatrix.m01, normalMatrix.m02);
 	}
 
 	private static void renderHat(AbstractClientPlayerEntity player, MatrixStack matrices,

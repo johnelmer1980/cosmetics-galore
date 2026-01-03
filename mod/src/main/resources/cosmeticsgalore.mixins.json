@@ -1,5 +1,5 @@
 {
-	"required": true,
+	"required": false,
 	"package": "com.cosmeticsgalore.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
@@ -8,6 +8,6 @@
 		"PlayerEntityRendererMixin"
 	],
 	"injectors": {
-		"defaultRequire": 1
+		"defaultRequire": 0
 	}
 }
