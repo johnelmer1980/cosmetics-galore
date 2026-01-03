@@ -1,6 +1,7 @@
 {
   "name": "capes-mod-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend API for Capes Mod cosmetics",
   "main": "api/index.js",
   "scripts": {
