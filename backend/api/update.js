@@ -1,4 +1,17 @@
-import { kv } from '@vercel/kv';
+import { createClient } from 'redis';
+
+let client;
+
+async function getRedisClient() {
+  if (!client) {
+    client = createClient({
+      url: process.env.REDIS_URL
+    });
+    client.on('error', (err) => console.log('Redis Client Error', err));
+    await client.connect();
+  }
+  return client;
+}
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -32,8 +45,9 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Store cosmetics in Vercel KV
-    await kv.set(`cosmetics:${username.toLowerCase()}`, cosmetics);
+    // Store cosmetics in Redis
+    const redis = await getRedisClient();
+    await redis.set(`cosmetics:${username.toLowerCase()}`, JSON.stringify(cosmetics));
 
     return res.status(200).json({
       success: true,

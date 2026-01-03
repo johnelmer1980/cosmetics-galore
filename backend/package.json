@@ -10,7 +10,7 @@
     "start": "node api/index.js"
   },
   "dependencies": {
-    "@vercel/kv": "^1.0.1",
+    "redis": "^4.6.0",
     "cors": "^2.8.5"
   },
   "engines": {

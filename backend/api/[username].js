@@ -1,4 +1,17 @@
-import { kv } from '@vercel/kv';
+import { createClient } from 'redis';
+
+let client;
+
+async function getRedisClient() {
+  if (!client) {
+    client = createClient({
+      url: process.env.REDIS_URL
+    });
+    client.on('error', (err) => console.log('Redis Client Error', err));
+    await client.connect();
+  }
+  return client;
+}
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -17,15 +30,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Fetch cosmetics from Vercel KV
-    const cosmetics = await kv.get(`cosmetics:${username.toLowerCase()}`);
+    // Fetch cosmetics from Redis
+    const redis = await getRedisClient();
+    const data = await redis.get(`cosmetics:${username.toLowerCase()}`);
 
-    if (!cosmetics) {
+    if (!data) {
       return res.status(404).json({
         error: 'No cosmetics found for this user',
         username: username
       });
     }
+
+    const cosmetics = JSON.parse(data);
 
     return res.status(200).json({
       username: username,
