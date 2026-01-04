@@ -219,13 +219,11 @@
     <script>
         let availableCosmetics = {};
         let selectedCosmetics = {
-            cape: null,
-            hat: null,
-            headband: null,
-            shield: null,
-            sword: null,
-            cloak: null,
-            aura: null
+            aura: null,
+            wings: null,
+            trail: null,
+            crown: null,
+            footsteps: null
         };
 
         async function loadAvailableCosmetics() {
@@ -252,13 +250,11 @@
                 if (response.ok) {
                     const data = await response.json();
                     selectedCosmetics = {
-                        cape: data.cape,
-                        hat: data.hat,
-                        headband: data.headband,
-                        shield: data.shield,
-                        sword: data.sword,
-                        cloak: data.cloak,
-                        aura: data.aura
+                        aura: data.aura,
+                        wings: data.wings,
+                        trail: data.trail,
+                        crown: data.crown,
+                        footsteps: data.footsteps
                     };
                     renderCosmetics();
                     showMessage('Cosmetics loaded successfully!', 'success');
@@ -275,21 +271,31 @@
             container.innerHTML = '';
             container.className = 'cosmetics-grid';
 
+            // Map API category names to our selectedCosmetics keys
+            const categoryMap = {
+                'auras': 'aura',
+                'wings': 'wings',
+                'trails': 'trail',
+                'crowns': 'crown',
+                'footsteps': 'footsteps'
+            };
+
             for (const [category, items] of Object.entries(availableCosmetics)) {
                 const categoryDiv = document.createElement('div');
                 categoryDiv.className = 'cosmetic-category';
 
-                const categoryName = category.replace(/s$/, ''); // Remove plural 's'
+                const categoryKey = categoryMap[category];
+                const displayName = category.replace(/s$/, ''); // For display only
                 categoryDiv.innerHTML = `<div class="category-title">${category}</div>`;
 
                 // Add "None" option
                 const noneDiv = document.createElement('div');
                 noneDiv.className = 'cosmetic-item none-option';
-                noneDiv.innerHTML = `<h4>None</h4><p>No ${categoryName}</p>`;
-                if (!selectedCosmetics[categoryName]) {
+                noneDiv.innerHTML = `<h4>None</h4><p>No ${displayName}</p>`;
+                if (!selectedCosmetics[categoryKey]) {
                     noneDiv.classList.add('selected');
                 }
-                noneDiv.onclick = () => selectCosmetic(categoryName, null);
+                noneDiv.onclick = () => selectCosmetic(categoryKey, null);
                 categoryDiv.appendChild(noneDiv);
 
                 // Add cosmetic items
@@ -300,10 +306,10 @@
                         <h4>${item.name}</h4>
                         <p>${item.description}</p>
                     `;
-                    if (selectedCosmetics[categoryName] === item.id) {
+                    if (selectedCosmetics[categoryKey] === item.id) {
                         itemDiv.classList.add('selected');
                     }
-                    itemDiv.onclick = () => selectCosmetic(categoryName, item.id);
+                    itemDiv.onclick = () => selectCosmetic(categoryKey, item.id);
                     categoryDiv.appendChild(itemDiv);
                 });
 
