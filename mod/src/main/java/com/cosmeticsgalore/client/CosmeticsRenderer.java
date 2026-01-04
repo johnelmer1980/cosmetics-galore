@@ -1,23 +1,51 @@
 package com.cosmeticsgalore.client;
 
 import com.cosmeticsgalore.CosmeticsGalore;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.feature.CapeFeatureRenderer;
+import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.client.world.ClientWorld;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class CosmeticsRenderer {
+
+	// Store player references during updateRenderState for later use in render
+	private static final Map<PlayerEntityRenderState, AbstractClientPlayerEntity> stateToPlayerMap = new ConcurrentHashMap<>();
+
+	public static void associateStateWithPlayer(PlayerEntityRenderState state, AbstractClientPlayerEntity player) {
+		stateToPlayerMap.put(state, player);
+	}
+
+	public static void renderFromState(PlayerEntityRenderState state, MatrixStack matrices,
+									   VertexConsumerProvider vertexConsumers, int light) {
+		AbstractClientPlayerEntity player = stateToPlayerMap.get(state);
+		if (player == null) {
+			// Can't render without player reference
+			return;
+		}
+
+		CosmeticsManager.PlayerCosmetics cosmetics = CosmeticsManager.getCosmetics(player.getGameProfile().id());
+		render(player, matrices, vertexConsumers, light, cosmetics);
+
+		// Clean up old references to prevent memory leaks
+		stateToPlayerMap.remove(state);
+	}
 
 	public static void render(AbstractClientPlayerEntity player, MatrixStack matrices,
 							  VertexConsumerProvider vertexConsumers, int light,
@@ -68,36 +96,27 @@ public class CosmeticsRenderer {
 		// Get custom cape texture
 		Identifier capeTexture = Identifier.of("cosmeticsgalore", "textures/entity/capes/" + capeId + ".png");
 
-		// Calculate cape movement
-		double deltaX = player.getX() - player.prevX;
-		double deltaZ = player.getZ() - player.prevZ;
-		double deltaY = player.getY() - player.prevY;
-
-		float bodyYaw = player.prevBodyYaw + (player.bodyYaw - player.prevBodyYaw);
-		double sinYaw = MathHelper.sin(bodyYaw * 0.017453292F);
-		double cosYaw = -MathHelper.cos(bodyYaw * 0.017453292F);
-		float capeY = (float) deltaY * 10.0F;
-		capeY = MathHelper.clamp(capeY, -6.0F, 32.0F);
-		float capeSwing = (float) (deltaX * cosYaw + deltaZ * sinYaw) * 100.0F;
-		capeSwing = MathHelper.clamp(capeSwing, 0.0F, 150.0F);
-		float capeStretch = (float) (deltaX * sinYaw - deltaZ * cosYaw) * 100.0F;
-		capeStretch = MathHelper.clamp(capeStretch, -20.0F, 20.0F);
+		// Simplified cape rendering without physics (deprecated fields removed in 1.21.10)
+		float capeY = 0.0F;
+		float capeSwing = 0.0F;
+		float capeStretch = 0.0F;
 
 		if (capeSwing < 0.0F) {
 			capeSwing = 0.0F;
 		}
 
-		float cameraPitch = (float)(player.prevCapeY + (player.capeY - player.prevCapeY));
-		capeY += MathHelper.sin((player.prevHorizontalSpeed + (player.horizontalSpeed - player.prevHorizontalSpeed)) * 6.0F) * 32.0F * cameraPitch;
+		// Simple animation based on player age
+		capeY += MathHelper.sin(player.age * 0.067F) * 3.0F;
 
 		matrices.push();
 		matrices.translate(0.0F, 0.0F, 0.125F);
-		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(6.0F + capeSwing / 2.0F + capeY));
-		matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(capeStretch / 2.0F));
-		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - capeStretch / 2.0F));
+		// Apply rotations using the peek().getPositionMatrix() method
+		MatrixStack.Entry entry = matrices.peek();
+		entry.getPositionMatrix().rotate(RotationAxis.POSITIVE_X.rotationDegrees(6.0F + capeSwing / 2.0F + capeY));
+		entry.getPositionMatrix().rotate(RotationAxis.POSITIVE_Z.rotationDegrees(capeStretch / 2.0F));
+		entry.getPositionMatrix().rotate(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - capeStretch / 2.0F));
 
 		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntitySolid(capeTexture));
-		MatrixStack.Entry entry = matrices.peek();
 		Matrix4f positionMatrix = entry.getPositionMatrix();
 		Matrix3f normalMatrix = entry.getNormalMatrix();
 
@@ -167,16 +186,17 @@ public class CosmeticsRenderer {
 
 	private static void renderAura(AbstractClientPlayerEntity player, MatrixStack matrices,
 								   VertexConsumerProvider vertexConsumers, int light, String auraId) {
-		World world = player.getWorld();
-		if (world == null) return;
+		MinecraftClient client = MinecraftClient.getInstance();
+		ClientWorld world = client.world;
+		if (world == null || client.particleManager == null) return;
 
 		// Only spawn particles every few ticks to avoid lag
 		if (world.getTime() % 4 != 0) return;
 
-		Vec3d pos = player.getPos();
-		double x = pos.x;
-		double y = pos.y + 1.0;
-		double z = pos.z;
+		// Use player position directly
+		double x = player.getX();
+		double y = player.getY() + 1.0;
+		double z = player.getZ();
 
 		switch (auraId) {
 			case "fire_aura":
@@ -188,10 +208,10 @@ public class CosmeticsRenderer {
 					double offsetZ = Math.sin(angle) * radius;
 					double offsetY = (Math.random() - 0.5) * 1.5;
 
-					world.addParticle(
+					client.particleManager.addParticle(
 						ParticleTypes.FLAME,
 						x + offsetX, y + offsetY, z + offsetZ,
-						0, 0.02, 0
+						0.0, 0.05, 0.0
 					);
 				}
 				break;
@@ -203,10 +223,10 @@ public class CosmeticsRenderer {
 					double offsetZ = (Math.random() - 0.5) * 0.8;
 					double offsetY = Math.random() * 1.5;
 
-					world.addParticle(
+					client.particleManager.addParticle(
 						ParticleTypes.SNOWFLAKE,
 						x + offsetX, y + offsetY, z + offsetZ,
-						0, -0.05, 0
+						0.0, -0.02, 0.0
 					);
 				}
 				break;
@@ -218,12 +238,10 @@ public class CosmeticsRenderer {
 					double offsetZ = (Math.random() - 0.5) * 0.6;
 					double offsetY = Math.random() * 1.8;
 
-					world.addParticle(
+					client.particleManager.addParticle(
 						ParticleTypes.ELECTRIC_SPARK,
 						x + offsetX, y + offsetY, z + offsetZ,
-						(Math.random() - 0.5) * 0.05,
-						(Math.random() - 0.5) * 0.05,
-						(Math.random() - 0.5) * 0.05
+						0.0, 0.0, 0.0
 					);
 				}
 				break;
@@ -234,10 +252,10 @@ public class CosmeticsRenderer {
 					double offsetX = (Math.random() - 0.5) * 0.6;
 					double offsetZ = (Math.random() - 0.5) * 0.6;
 
-					world.addParticle(
+					client.particleManager.addParticle(
 						ParticleTypes.HEART,
 						x + offsetX, y, z + offsetZ,
-						0, 0.1, 0
+						0.0, 0.1, 0.0
 					);
 				}
 				break;
@@ -251,10 +269,10 @@ public class CosmeticsRenderer {
 					double offsetZ = Math.sin(angle) * radius;
 					double offsetY = (Math.random() - 0.5) * 1.5;
 
-					world.addParticle(
+					client.particleManager.addParticle(
 						ParticleTypes.SOUL_FIRE_FLAME,
 						x + offsetX, y + offsetY, z + offsetZ,
-						0, 0.02, 0
+						0.0, 0.05, 0.0
 					);
 				}
 				break;
@@ -266,12 +284,10 @@ public class CosmeticsRenderer {
 					double offsetZ = (Math.random() - 0.5) * 0.8;
 					double offsetY = Math.random() * 1.5;
 
-					world.addParticle(
+					client.particleManager.addParticle(
 						ParticleTypes.ENCHANT,
 						x + offsetX, y + offsetY, z + offsetZ,
-						(Math.random() - 0.5) * 0.5,
-						0.1,
-						(Math.random() - 0.5) * 0.5
+						(Math.random() - 0.5) * 0.1, 0.05, (Math.random() - 0.5) * 0.1
 					);
 				}
 				break;
@@ -285,12 +301,10 @@ public class CosmeticsRenderer {
 					double offsetZ = Math.sin(angle) * radius;
 					double offsetY = Math.random() * 1.8;
 
-					world.addParticle(
+					client.particleManager.addParticle(
 						ParticleTypes.PORTAL,
 						x + offsetX, y + offsetY, z + offsetZ,
-						-offsetX * 0.1,
-						0,
-						-offsetZ * 0.1
+						(Math.random() - 0.5) * 0.1, -0.05, (Math.random() - 0.5) * 0.1
 					);
 				}
 				break;
@@ -302,12 +316,10 @@ public class CosmeticsRenderer {
 					double offsetZ = (Math.random() - 0.5) * 0.8;
 					double offsetY = Math.random() * 2.0;
 
-					world.addParticle(
+					client.particleManager.addParticle(
 						ParticleTypes.CHERRY_LEAVES,
 						x + offsetX, y + offsetY, z + offsetZ,
-						(Math.random() - 0.5) * 0.05,
-						-0.03,
-						(Math.random() - 0.5) * 0.05
+						(Math.random() - 0.5) * 0.05, -0.03, (Math.random() - 0.5) * 0.05
 					);
 				}
 				break;
