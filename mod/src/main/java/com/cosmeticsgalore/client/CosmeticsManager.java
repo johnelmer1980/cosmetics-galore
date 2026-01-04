@@ -53,26 +53,21 @@ public class CosmeticsManager {
 	private static PlayerCosmetics parseCosmetics(JsonObject json) {
 		PlayerCosmetics cosmetics = new PlayerCosmetics();
 
-		if (json.has("cape") && !json.get("cape").isJsonNull()) {
-			cosmetics.cape = json.get("cape").getAsString();
-		}
-		if (json.has("hat") && !json.get("hat").isJsonNull()) {
-			cosmetics.hat = json.get("hat").getAsString();
-		}
-		if (json.has("headband") && !json.get("headband").isJsonNull()) {
-			cosmetics.headband = json.get("headband").getAsString();
-		}
-		if (json.has("shield") && !json.get("shield").isJsonNull()) {
-			cosmetics.shield = json.get("shield").getAsString();
-		}
-		if (json.has("sword") && !json.get("sword").isJsonNull()) {
-			cosmetics.sword = json.get("sword").getAsString();
-		}
-		if (json.has("cloak") && !json.get("cloak").isJsonNull()) {
-			cosmetics.cloak = json.get("cloak").getAsString();
-		}
+		// Only parse particle-based cosmetics (compatible with 1.21.10)
 		if (json.has("aura") && !json.get("aura").isJsonNull()) {
 			cosmetics.aura = json.get("aura").getAsString();
+		}
+		if (json.has("wings") && !json.get("wings").isJsonNull()) {
+			cosmetics.wings = json.get("wings").getAsString();
+		}
+		if (json.has("trail") && !json.get("trail").isJsonNull()) {
+			cosmetics.trail = json.get("trail").getAsString();
+		}
+		if (json.has("crown") && !json.get("crown").isJsonNull()) {
+			cosmetics.crown = json.get("crown").getAsString();
+		}
+		if (json.has("footsteps") && !json.get("footsteps").isJsonNull()) {
+			cosmetics.footsteps = json.get("footsteps").getAsString();
 		}
 
 		return cosmetics;
@@ -91,30 +86,24 @@ public class CosmeticsManager {
 	}
 
 	public static class PlayerCosmetics {
-		public String cape;
-		public String hat;
-		public String headband;
-		public String shield;
-		public String sword;
-		public String cloak;
 		public String aura;
+		public String wings;
+		public String trail;
+		public String crown;
+		public String footsteps;
 
 		public PlayerCosmetics() {
-			this.cape = null;
-			this.hat = null;
-			this.headband = null;
-			this.shield = null;
-			this.sword = null;
-			this.cloak = null;
 			this.aura = null;
+			this.wings = null;
+			this.trail = null;
+			this.crown = null;
+			this.footsteps = null;
 		}
 
-		public boolean hasCape() { return cape != null && !cape.isEmpty(); }
-		public boolean hasHat() { return hat != null && !hat.isEmpty(); }
-		public boolean hasHeadband() { return headband != null && !headband.isEmpty(); }
-		public boolean hasShield() { return shield != null && !shield.isEmpty(); }
-		public boolean hasSword() { return sword != null && !sword.isEmpty(); }
-		public boolean hasCloak() { return cloak != null && !cloak.isEmpty(); }
 		public boolean hasAura() { return aura != null && !aura.isEmpty(); }
+		public boolean hasWings() { return wings != null && !wings.isEmpty(); }
+		public boolean hasTrail() { return trail != null && !trail.isEmpty(); }
+		public boolean hasCrown() { return crown != null && !crown.isEmpty(); }
+		public boolean hasFootsteps() { return footsteps != null && !footsteps.isEmpty(); }
 	}
 }

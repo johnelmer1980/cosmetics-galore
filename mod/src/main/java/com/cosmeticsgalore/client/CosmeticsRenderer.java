@@ -40,47 +40,6 @@ public class CosmeticsRenderer {
 		return stateToPlayerMap.get(state);
 	}
 
-	// Public method to render cosmetics in feature renderer context (already in player-relative space)
-	public static void renderInFeatureContext(AbstractClientPlayerEntity player, MatrixStack matrices,
-											  VertexConsumerProvider vertexConsumers, int light,
-											  CosmeticsManager.PlayerCosmetics cosmetics) {
-		matrices.push();
-
-		// No camera-relative translation needed - we're already in player-relative space
-
-		// Render cape
-		if (cosmetics.hasCape()) {
-			renderCape(player, matrices, vertexConsumers, light, cosmetics.cape);
-		}
-
-		// Render hat
-		if (cosmetics.hasHat()) {
-			renderHat(player, matrices, vertexConsumers, light, cosmetics.hat);
-		}
-
-		// Render headband
-		if (cosmetics.hasHeadband()) {
-			renderHeadband(player, matrices, vertexConsumers, light, cosmetics.headband);
-		}
-
-		// Render shield
-		if (cosmetics.hasShield()) {
-			renderShield(player, matrices, vertexConsumers, light, cosmetics.shield);
-		}
-
-		// Render sword
-		if (cosmetics.hasSword()) {
-			renderSword(player, matrices, vertexConsumers, light, cosmetics.sword);
-		}
-
-		// Render cloak
-		if (cosmetics.hasCloak()) {
-			renderCloak(player, matrices, vertexConsumers, light, cosmetics.cloak);
-		}
-
-		matrices.pop();
-	}
-
 	// Public method to render aura particles for a player
 	public static void renderAuraParticles(AbstractClientPlayerEntity player, String auraId) {
 		if (player == null || auraId == null) {
@@ -102,149 +61,90 @@ public class CosmeticsRenderer {
 		spawnAuraParticles(player, world, client, auraId);
 	}
 
-	public static void render(AbstractClientPlayerEntity player, MatrixStack matrices,
-							  VertexConsumerProvider vertexConsumers, int light,
-							  CosmeticsManager.PlayerCosmetics cosmetics, Vec3d cameraPos) {
-
-		matrices.push();
-
-		// Calculate camera-relative position
-		double relX = player.getX() - cameraPos.x;
-		double relY = player.getY() - cameraPos.y;
-		double relZ = player.getZ() - cameraPos.z;
-
-		// Translate to player position (camera-relative)
-		matrices.translate(relX, relY, relZ);
-
-		// Render cape
-		if (cosmetics.hasCape()) {
-			renderCape(player, matrices, vertexConsumers, light, cosmetics.cape);
+	// Public method to render wings particles
+	public static void renderWingsParticles(AbstractClientPlayerEntity player, String wingsId) {
+		if (player == null || wingsId == null) {
+			return;
 		}
 
-		// Render hat
-		if (cosmetics.hasHat()) {
-			renderHat(player, matrices, vertexConsumers, light, cosmetics.hat);
+		MinecraftClient client = MinecraftClient.getInstance();
+		ClientWorld world = client.world;
+		if (world == null || client.particleManager == null) {
+			return;
 		}
 
-		// Render headband
-		if (cosmetics.hasHeadband()) {
-			renderHeadband(player, matrices, vertexConsumers, light, cosmetics.headband);
+		// Only spawn particles every few ticks
+		if (world.getTime() % 3 != 0) {
+			return;
 		}
 
-		// Render shield
-		if (cosmetics.hasShield()) {
-			renderShield(player, matrices, vertexConsumers, light, cosmetics.shield);
+		spawnWingsParticles(player, world, client, wingsId);
+	}
+
+	// Public method to render trail particles
+	public static void renderTrailParticles(AbstractClientPlayerEntity player, String trailId) {
+		if (player == null || trailId == null) {
+			return;
 		}
 
-		// Render sword
-		if (cosmetics.hasSword()) {
-			renderSword(player, matrices, vertexConsumers, light, cosmetics.sword);
+		MinecraftClient client = MinecraftClient.getInstance();
+		ClientWorld world = client.world;
+		if (world == null || client.particleManager == null) {
+			return;
 		}
 
-		// Render cloak
-		if (cosmetics.hasCloak()) {
-			renderCloak(player, matrices, vertexConsumers, light, cosmetics.cloak);
+		// Only spawn trail if player is moving
+		if (player.getVelocity().lengthSquared() < 0.01) {
+			return;
 		}
 
-		// Note: Aura particles are rendered via ClientTickEvents, not here
-
-		matrices.pop();
+		// Spawn trail particles every tick when moving
+		spawnTrailParticles(player, world, client, trailId);
 	}
 
-	private static void renderCape(AbstractClientPlayerEntity player, MatrixStack matrices,
-								   VertexConsumerProvider vertexConsumers, int light, String capeId) {
-		// Get custom cape texture
-		Identifier capeTexture = Identifier.of("cosmeticsgalore", "textures/entity/capes/" + capeId + ".png");
-
-		// Calculate cape animation based on player velocity and rotation
-		float yaw = player.getYaw();
-		Vec3d velocity = player.getVelocity();
-		float capeFlow = (float)(velocity.lengthSquared()) * 2.0F;
-		capeFlow = MathHelper.clamp(capeFlow, 0.0F, 1.0F);
-
-		// Simple idle animation
-		float capeIdle = MathHelper.sin(player.age * 0.067F) * 0.05F;
-
-		matrices.push();
-
-		// Rotate to face away from player
-		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - yaw));
-
-		// Position cape behind player
-		matrices.translate(0.0F, 0.0F, 0.125F);
-
-		// Apply cape flow based on movement
-		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(6.0F + capeFlow * 10.0F + capeIdle));
-
-		// Apply rotations using matrix stack
-		MatrixStack.Entry entry = matrices.peek();
-
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntitySolid(capeTexture));
-		Matrix4f positionMatrix = entry.getPositionMatrix();
-		Matrix3f normalMatrix = entry.getNormalMatrix();
-
-		// Render cape geometry
-		for (int part = 0; part < 16; ++part) {
-			float y1 = (float) part / 16.0F;
-			float y2 = (float) (part + 1) / 16.0F;
-			float z1 = y1 * 0.0625F;
-			float z2 = y2 * 0.0625F;
-
-			// Front face
-			vertex(vertexConsumer, positionMatrix, normalMatrix, light, -0.15625F, -y1, z1, 0.0F, y1);
-			vertex(vertexConsumer, positionMatrix, normalMatrix, light, 0.15625F, -y1, z1, 0.09375F, y1);
-			vertex(vertexConsumer, positionMatrix, normalMatrix, light, 0.15625F, -y2, z2, 0.09375F, y2);
-			vertex(vertexConsumer, positionMatrix, normalMatrix, light, -0.15625F, -y2, z2, 0.0F, y2);
-
-			// Back face
-			vertex(vertexConsumer, positionMatrix, normalMatrix, light, 0.15625F, -y1, z1, 0.09375F, y1);
-			vertex(vertexConsumer, positionMatrix, normalMatrix, light, -0.15625F, -y1, z1, 0.0F, y1);
-			vertex(vertexConsumer, positionMatrix, normalMatrix, light, -0.15625F, -y2, z2, 0.0F, y2);
-			vertex(vertexConsumer, positionMatrix, normalMatrix, light, 0.15625F, -y2, z2, 0.09375F, y2);
+	// Public method to render crown particles
+	public static void renderCrownParticles(AbstractClientPlayerEntity player, String crownId) {
+		if (player == null || crownId == null) {
+			return;
 		}
 
-		matrices.pop();
+		MinecraftClient client = MinecraftClient.getInstance();
+		ClientWorld world = client.world;
+		if (world == null || client.particleManager == null) {
+			return;
+		}
+
+		// Spawn crown particles every few ticks
+		if (world.getTime() % 5 != 0) {
+			return;
+		}
+
+		spawnCrownParticles(player, world, client, crownId);
 	}
 
-	private static void vertex(VertexConsumer vertexConsumer, Matrix4f positionMatrix, Matrix3f normalMatrix,
-							   int light, float x, float y, float z, float u, float v) {
-		vertexConsumer.vertex(positionMatrix, x, y, z)
-				.color(255, 255, 255, 255)
-				.texture(u, v)
-				.overlay(OverlayTexture.DEFAULT_UV)
-				.light(light)
-				.normal(normalMatrix.m00, normalMatrix.m01, normalMatrix.m02);
-	}
+	// Public method to render footstep particles
+	public static void renderFootstepParticles(AbstractClientPlayerEntity player, String footstepsId) {
+		if (player == null || footstepsId == null) {
+			return;
+		}
 
-	private static void renderHat(AbstractClientPlayerEntity player, MatrixStack matrices,
-								  VertexConsumerProvider vertexConsumers, int light, String hatId) {
-		// TODO: Implement hat rendering
-		// This will render a 3D model or texture on the player's head
-		CosmeticsGalore.LOGGER.debug("Rendering hat: {} for player {}", hatId, player.getName().getString());
-	}
+		MinecraftClient client = MinecraftClient.getInstance();
+		ClientWorld world = client.world;
+		if (world == null || client.particleManager == null) {
+			return;
+		}
 
-	private static void renderHeadband(AbstractClientPlayerEntity player, MatrixStack matrices,
-									   VertexConsumerProvider vertexConsumers, int light, String headbandId) {
-		// TODO: Implement headband rendering
-		CosmeticsGalore.LOGGER.debug("Rendering headband: {} for player {}", headbandId, player.getName().getString());
-	}
+		// Only spawn footsteps if player is moving and on ground
+		if (player.getVelocity().lengthSquared() < 0.01 || !player.isOnGround()) {
+			return;
+		}
 
-	private static void renderShield(AbstractClientPlayerEntity player, MatrixStack matrices,
-									 VertexConsumerProvider vertexConsumers, int light, String shieldId) {
-		// TODO: Implement shield rendering (on back or side)
-		CosmeticsGalore.LOGGER.debug("Rendering shield: {} for player {}", shieldId, player.getName().getString());
-	}
+		// Spawn footstep particles every few ticks when walking
+		if (world.getTime() % 6 != 0) {
+			return;
+		}
 
-	private static void renderSword(AbstractClientPlayerEntity player, MatrixStack matrices,
-									VertexConsumerProvider vertexConsumers, int light, String swordId) {
-		// TODO: Implement sword rendering (sheathed on hip)
-		CosmeticsGalore.LOGGER.debug("Rendering sword: {} for player {}", swordId, player.getName().getString());
-	}
-
-	private static void renderCloak(AbstractClientPlayerEntity player, MatrixStack matrices,
-									VertexConsumerProvider vertexConsumers, int light, String cloakId) {
-		// TODO: Implement cloak rendering (similar to cape but different style)
-		CosmeticsGalore.LOGGER.debug("Rendering cloak: {} for player {}", cloakId, player.getName().getString());
+		spawnFootstepParticles(player, world, client, footstepsId);
 	}
 
 
@@ -382,6 +282,217 @@ public class CosmeticsRenderer {
 
 			default:
 				CosmeticsGalore.LOGGER.debug("Unknown aura type: {}", auraId);
+				break;
+		}
+	}
+
+	private static void spawnWingsParticles(AbstractClientPlayerEntity player, ClientWorld world, MinecraftClient client, String wingsId) {
+		double x = player.getX();
+		double y = player.getY() + 1.3; // Shoulder height
+		double z = player.getZ();
+
+		// Calculate wing positions based on player rotation
+		float yaw = (float) Math.toRadians(player.getYaw());
+		double leftX = x + Math.cos(yaw + Math.PI / 2) * 0.3;
+		double leftZ = z + Math.sin(yaw + Math.PI / 2) * 0.3;
+		double rightX = x + Math.cos(yaw - Math.PI / 2) * 0.3;
+		double rightZ = z + Math.sin(yaw - Math.PI / 2) * 0.3;
+
+		switch (wingsId) {
+			case "angel_wings":
+				// White feather-like particles from shoulders
+				for (int i = 0; i < 2; i++) {
+					double offsetY = (Math.random() - 0.5) * 0.5;
+					client.particleManager.addParticle(ParticleTypes.END_ROD, leftX, y + offsetY, leftZ, 0.0, 0.0, 0.0);
+					client.particleManager.addParticle(ParticleTypes.END_ROD, rightX, y + offsetY, rightZ, 0.0, 0.0, 0.0);
+				}
+				break;
+
+			case "demon_wings":
+				// Dark smoke particles
+				for (int i = 0; i < 2; i++) {
+					double offsetY = (Math.random() - 0.5) * 0.5;
+					client.particleManager.addParticle(ParticleTypes.LARGE_SMOKE, leftX, y + offsetY, leftZ, 0.0, -0.02, 0.0);
+					client.particleManager.addParticle(ParticleTypes.LARGE_SMOKE, rightX, y + offsetY, rightZ, 0.0, -0.02, 0.0);
+				}
+				break;
+
+			case "dragon_wings":
+				// Fiery particles
+				for (int i = 0; i < 2; i++) {
+					double offsetY = (Math.random() - 0.5) * 0.5;
+					client.particleManager.addParticle(ParticleTypes.FLAME, leftX, y + offsetY, leftZ, 0.0, 0.02, 0.0);
+					client.particleManager.addParticle(ParticleTypes.FLAME, rightX, y + offsetY, rightZ, 0.0, 0.02, 0.0);
+				}
+				break;
+
+			case "butterfly_wings":
+				// Colorful sparkle particles
+				if (world.getTime() % 2 == 0) {
+					client.particleManager.addParticle(ParticleTypes.WAX_ON, leftX, y, leftZ, 0.0, 0.0, 0.0);
+					client.particleManager.addParticle(ParticleTypes.WAX_ON, rightX, y, rightZ, 0.0, 0.0, 0.0);
+				}
+				break;
+
+			case "fairy_wings":
+				// Sparkly magical particles
+				for (int i = 0; i < 2; i++) {
+					double offsetY = (Math.random() - 0.5) * 0.5;
+					client.particleManager.addParticle(ParticleTypes.ENCHANT, leftX, y + offsetY, leftZ, 0.0, 0.01, 0.0);
+					client.particleManager.addParticle(ParticleTypes.ENCHANT, rightX, y + offsetY, rightZ, 0.0, 0.01, 0.0);
+				}
+				break;
+
+			default:
+				CosmeticsGalore.LOGGER.debug("Unknown wings type: {}", wingsId);
+				break;
+		}
+	}
+
+	private static void spawnTrailParticles(AbstractClientPlayerEntity player, ClientWorld world, MinecraftClient client, String trailId) {
+		double x = player.getX();
+		double y = player.getY() + 0.1; // Ground level
+		double z = player.getZ();
+
+		switch (trailId) {
+			case "rainbow_trail":
+				// Multiple colored particles (using various particle types for color variety)
+				client.particleManager.addParticle(ParticleTypes.WAX_ON, x, y, z, 0.0, 0.0, 0.0);
+				client.particleManager.addParticle(ParticleTypes.SCRAPE, x, y, z, 0.0, 0.0, 0.0);
+				break;
+
+			case "star_trail":
+				// Twinkling star particles
+				if (world.getTime() % 2 == 0) {
+					client.particleManager.addParticle(ParticleTypes.END_ROD, x, y + 0.3, z, 0.0, 0.0, 0.0);
+				}
+				break;
+
+			case "smoke_trail":
+				// Smoke particles
+				client.particleManager.addParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE, x, y, z, 0.0, 0.05, 0.0);
+				break;
+
+			case "redstone_trail":
+				// Redstone dust particles
+				client.particleManager.addParticle(ParticleTypes.DUST_PLUME, x, y, z, 0.0, 0.0, 0.0);
+				break;
+
+			case "slime_trail":
+				// Slime particles
+				client.particleManager.addParticle(ParticleTypes.ITEM_SLIME, x, y, z, 0.0, 0.0, 0.0);
+				break;
+
+			default:
+				CosmeticsGalore.LOGGER.debug("Unknown trail type: {}", trailId);
+				break;
+		}
+	}
+
+	private static void spawnCrownParticles(AbstractClientPlayerEntity player, ClientWorld world, MinecraftClient client, String crownId) {
+		double x = player.getX();
+		double y = player.getY() + 2.2; // Above head
+		double z = player.getZ();
+
+		switch (crownId) {
+			case "golden_crown":
+				// Golden sparkle particles in a circle above head
+				double angle = (world.getTime() * 0.1) % (Math.PI * 2);
+				for (int i = 0; i < 3; i++) {
+					double crownAngle = angle + (i * Math.PI * 2 / 3);
+					double radius = 0.3;
+					double offsetX = Math.cos(crownAngle) * radius;
+					double offsetZ = Math.sin(crownAngle) * radius;
+					client.particleManager.addParticle(ParticleTypes.WAX_ON, x + offsetX, y, z + offsetZ, 0.0, 0.0, 0.0);
+				}
+				break;
+
+			case "diamond_crown":
+				// Diamond sparkles
+				double diamondAngle = (world.getTime() * 0.15) % (Math.PI * 2);
+				for (int i = 0; i < 4; i++) {
+					double crownAngle = diamondAngle + (i * Math.PI * 2 / 4);
+					double radius = 0.3;
+					double offsetX = Math.cos(crownAngle) * radius;
+					double offsetZ = Math.sin(crownAngle) * radius;
+					client.particleManager.addParticle(ParticleTypes.GLOW, x + offsetX, y, z + offsetZ, 0.0, 0.0, 0.0);
+				}
+				break;
+
+			case "star_crown":
+				// Rotating stars
+				double starAngle = (world.getTime() * 0.2) % (Math.PI * 2);
+				for (int i = 0; i < 5; i++) {
+					double crownAngle = starAngle + (i * Math.PI * 2 / 5);
+					double radius = 0.35;
+					double offsetX = Math.cos(crownAngle) * radius;
+					double offsetZ = Math.sin(crownAngle) * radius;
+					client.particleManager.addParticle(ParticleTypes.END_ROD, x + offsetX, y, z + offsetZ, 0.0, 0.0, 0.0);
+				}
+				break;
+
+			case "halo":
+				// Angelic white particle ring
+				double haloAngle = (world.getTime() * 0.08) % (Math.PI * 2);
+				for (int i = 0; i < 8; i++) {
+					double crownAngle = haloAngle + (i * Math.PI * 2 / 8);
+					double radius = 0.4;
+					double offsetX = Math.cos(crownAngle) * radius;
+					double offsetZ = Math.sin(crownAngle) * radius;
+					client.particleManager.addParticle(ParticleTypes.END_ROD, x + offsetX, y + 0.1, z + offsetZ, 0.0, 0.0, 0.0);
+				}
+				break;
+
+			default:
+				CosmeticsGalore.LOGGER.debug("Unknown crown type: {}", crownId);
+				break;
+		}
+	}
+
+	private static void spawnFootstepParticles(AbstractClientPlayerEntity player, ClientWorld world, MinecraftClient client, String footstepsId) {
+		double x = player.getX();
+		double y = player.getY() + 0.05; // Just above ground
+		double z = player.getZ();
+
+		switch (footstepsId) {
+			case "fire_steps":
+				// Flame particles at feet
+				for (int i = 0; i < 3; i++) {
+					double offsetX = (Math.random() - 0.5) * 0.3;
+					double offsetZ = (Math.random() - 0.5) * 0.3;
+					client.particleManager.addParticle(ParticleTypes.FLAME, x + offsetX, y, z + offsetZ, 0.0, 0.01, 0.0);
+				}
+				break;
+
+			case "flower_steps":
+				// Flower/nature particles
+				if (world.getTime() % 2 == 0) {
+					double offsetX = (Math.random() - 0.5) * 0.3;
+					double offsetZ = (Math.random() - 0.5) * 0.3;
+					client.particleManager.addParticle(ParticleTypes.CHERRY_LEAVES, x + offsetX, y, z + offsetZ, 0.0, 0.02, 0.0);
+				}
+				break;
+
+			case "water_steps":
+				// Water splash particles
+				for (int i = 0; i < 2; i++) {
+					double offsetX = (Math.random() - 0.5) * 0.3;
+					double offsetZ = (Math.random() - 0.5) * 0.3;
+					client.particleManager.addParticle(ParticleTypes.SPLASH, x + offsetX, y, z + offsetZ, 0.0, 0.05, 0.0);
+				}
+				break;
+
+			case "note_steps":
+				// Musical note particles
+				if (world.getTime() % 2 == 0) {
+					double offsetX = (Math.random() - 0.5) * 0.3;
+					double offsetZ = (Math.random() - 0.5) * 0.3;
+					client.particleManager.addParticle(ParticleTypes.NOTE, x + offsetX, y + 0.2, z + offsetZ, 0.0, 0.05, 0.0);
+				}
+				break;
+
+			default:
+				CosmeticsGalore.LOGGER.debug("Unknown footsteps type: {}", footstepsId);
 				break;
 		}
 	}

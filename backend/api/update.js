@@ -27,21 +27,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { username, cape, hat, headband, shield, sword, cloak, aura } = req.body;
+  const { username, aura, wings, trail, crown, footsteps } = req.body;
 
   if (!username) {
     return res.status(400).json({ error: 'Username is required' });
   }
 
-  // Validate cosmetic IDs (optional - you can add more validation)
+  // Store only particle-based cosmetics (compatible with Minecraft 1.21.10)
   const cosmetics = {
-    cape: cape || null,
-    hat: hat || null,
-    headband: headband || null,
-    shield: shield || null,
-    sword: sword || null,
-    cloak: cloak || null,
-    aura: aura || null
+    aura: aura || null,
+    wings: wings || null,
+    trail: trail || null,
+    crown: crown || null,
+    footsteps: footsteps || null
   };
 
   try {
