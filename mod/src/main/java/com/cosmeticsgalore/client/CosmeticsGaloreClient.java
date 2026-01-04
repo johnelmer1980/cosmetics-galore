@@ -39,7 +39,7 @@ public class CosmeticsGaloreClient implements ClientModInitializer {
 		});
 
 		CosmeticsGalore.LOGGER.info("Cosmetics Galore initialized with particle aura support!");
-		CosmeticsGalore.LOGGER.info("NOTE: Fabric API 0.138.4 doesn't include WorldRenderEvents");
-		CosmeticsGalore.LOGGER.info("Cape/hat/shield rendering will be added when upgrading to newer Fabric API");
+		CosmeticsGalore.LOGGER.info("NOTE: Cape/hat/shield rendering requires WorldRenderEvents (removed in 1.21.9+)");
+		CosmeticsGalore.LOGGER.info("See https://github.com/FabricMC/fabric/issues/4902 for status");
 	}
 }

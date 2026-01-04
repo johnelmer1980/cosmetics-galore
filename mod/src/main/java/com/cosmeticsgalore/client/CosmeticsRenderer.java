@@ -30,6 +30,57 @@ public class CosmeticsRenderer {
 	// Store player references during updateRenderState for later use in render
 	private static final Map<PlayerEntityRenderState, AbstractClientPlayerEntity> stateToPlayerMap = new ConcurrentHashMap<>();
 
+	// Public method to associate state with player
+	public static void associateStateWithPlayer(PlayerEntityRenderState state, AbstractClientPlayerEntity player) {
+		stateToPlayerMap.put(state, player);
+	}
+
+	// Public method to get player from state
+	public static AbstractClientPlayerEntity getPlayerFromState(PlayerEntityRenderState state) {
+		return stateToPlayerMap.get(state);
+	}
+
+	// Public method to render cosmetics in feature renderer context (already in player-relative space)
+	public static void renderInFeatureContext(AbstractClientPlayerEntity player, MatrixStack matrices,
+											  VertexConsumerProvider vertexConsumers, int light,
+											  CosmeticsManager.PlayerCosmetics cosmetics) {
+		matrices.push();
+
+		// No camera-relative translation needed - we're already in player-relative space
+
+		// Render cape
+		if (cosmetics.hasCape()) {
+			renderCape(player, matrices, vertexConsumers, light, cosmetics.cape);
+		}
+
+		// Render hat
+		if (cosmetics.hasHat()) {
+			renderHat(player, matrices, vertexConsumers, light, cosmetics.hat);
+		}
+
+		// Render headband
+		if (cosmetics.hasHeadband()) {
+			renderHeadband(player, matrices, vertexConsumers, light, cosmetics.headband);
+		}
+
+		// Render shield
+		if (cosmetics.hasShield()) {
+			renderShield(player, matrices, vertexConsumers, light, cosmetics.shield);
+		}
+
+		// Render sword
+		if (cosmetics.hasSword()) {
+			renderSword(player, matrices, vertexConsumers, light, cosmetics.sword);
+		}
+
+		// Render cloak
+		if (cosmetics.hasCloak()) {
+			renderCloak(player, matrices, vertexConsumers, light, cosmetics.cloak);
+		}
+
+		matrices.pop();
+	}
+
 	// Public method to render aura particles for a player
 	public static void renderAuraParticles(AbstractClientPlayerEntity player, String auraId) {
 		if (player == null || auraId == null) {

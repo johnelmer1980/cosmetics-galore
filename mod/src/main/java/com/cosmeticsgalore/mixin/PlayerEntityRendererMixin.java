@@ -1,6 +1,7 @@
 package com.cosmeticsgalore.mixin;
 
 import com.cosmeticsgalore.client.CosmeticsManager;
+import com.cosmeticsgalore.client.CosmeticsRenderer;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
@@ -18,7 +19,7 @@ public abstract class PlayerEntityRendererMixin extends EntityRenderer<AbstractC
 		super(null);
 	}
 
-	// Target the updateRenderState method to fetch cosmetics
+	// Target the updateRenderState method to fetch cosmetics and associate state with player
 	@Inject(method = "updateRenderState(Lnet/minecraft/entity/PlayerLikeEntity;Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;F)V", at = @At("RETURN"))
 	private void onUpdateRenderState(PlayerLikeEntity player, PlayerEntityRenderState state, float tickDelta, CallbackInfo ci) {
 		try {
@@ -28,6 +29,9 @@ public abstract class PlayerEntityRendererMixin extends EntityRenderer<AbstractC
 			}
 
 			AbstractClientPlayerEntity clientPlayer = (AbstractClientPlayerEntity) player;
+
+			// Associate state with player for feature renderer
+			CosmeticsRenderer.associateStateWithPlayer(state, clientPlayer);
 
 			// Fetch cosmetics if not already cached
 			CosmeticsManager.PlayerCosmetics cosmetics = CosmeticsManager.getCosmetics(clientPlayer.getGameProfile().id());
