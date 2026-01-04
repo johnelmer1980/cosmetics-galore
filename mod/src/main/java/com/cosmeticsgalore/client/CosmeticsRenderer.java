@@ -7,8 +7,10 @@ import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.feature.CapeFeatureRenderer;
 import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.Identifier;
@@ -28,23 +30,25 @@ public class CosmeticsRenderer {
 	// Store player references during updateRenderState for later use in render
 	private static final Map<PlayerEntityRenderState, AbstractClientPlayerEntity> stateToPlayerMap = new ConcurrentHashMap<>();
 
-	public static void associateStateWithPlayer(PlayerEntityRenderState state, AbstractClientPlayerEntity player) {
-		stateToPlayerMap.put(state, player);
-	}
-
-	public static void renderFromState(PlayerEntityRenderState state, MatrixStack matrices,
-									   VertexConsumerProvider vertexConsumers, int light) {
-		AbstractClientPlayerEntity player = stateToPlayerMap.get(state);
-		if (player == null) {
-			// Can't render without player reference
+	// Public method to render aura particles for a player
+	public static void renderAuraParticles(AbstractClientPlayerEntity player, String auraId) {
+		if (player == null || auraId == null) {
 			return;
 		}
 
-		CosmeticsManager.PlayerCosmetics cosmetics = CosmeticsManager.getCosmetics(player.getGameProfile().id());
-		render(player, matrices, vertexConsumers, light, cosmetics);
+		MinecraftClient client = MinecraftClient.getInstance();
+		ClientWorld world = client.world;
+		if (world == null || client.particleManager == null) {
+			return;
+		}
 
-		// Clean up old references to prevent memory leaks
-		stateToPlayerMap.remove(state);
+		// Only spawn particles every few ticks to avoid lag
+		if (world.getTime() % 4 != 0) {
+			return;
+		}
+
+		// Spawn particles at player position
+		spawnAuraParticles(player, world, client, auraId);
 	}
 
 	public static void render(AbstractClientPlayerEntity player, MatrixStack matrices,
@@ -193,6 +197,10 @@ public class CosmeticsRenderer {
 		// Only spawn particles every few ticks to avoid lag
 		if (world.getTime() % 4 != 0) return;
 
+		spawnAuraParticles(player, world, client, auraId);
+	}
+
+	private static void spawnAuraParticles(AbstractClientPlayerEntity player, ClientWorld world, MinecraftClient client, String auraId) {
 		// Use player position directly
 		double x = player.getX();
 		double y = player.getY() + 1.0;

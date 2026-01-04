@@ -22,22 +22,23 @@ public class CosmeticsGaloreClient implements ClientModInitializer {
 			}
 		});
 
-		// Fetch cosmetics for nearby players
+		// Render particle auras for nearby players
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (client.world != null && client.player != null) {
 				client.world.getPlayers().forEach(player -> {
 					if (player instanceof AbstractClientPlayerEntity clientPlayer) {
 						CosmeticsManager.PlayerCosmetics cosmetics = CosmeticsManager.getCosmetics(clientPlayer.getGameProfile().id());
 
-						// If cosmetics aren't loaded yet, fetch them
-						if (cosmetics.cape == null && cosmetics.hat == null) {
-							CosmeticsManager.fetchCosmetics(clientPlayer.getGameProfile().id(), clientPlayer.getName().getString());
+						// Render aura particles
+						if (cosmetics.hasAura()) {
+							CosmeticsRenderer.renderAuraParticles(clientPlayer, cosmetics.aura);
 						}
 					}
 				});
 			}
 		});
 
-		CosmeticsGalore.LOGGER.info("NOTE: Cosmetics rendering requires the mixin to work. If cosmetics don't appear, the mixin may not be compatible with your Minecraft version.");
+		CosmeticsGalore.LOGGER.info("Cosmetics Galore initialized with particle aura support!");
+		CosmeticsGalore.LOGGER.info("NOTE: Cape/hat/shield rendering in 1.21.10 requires render pipeline updates (coming soon)");
 	}
 }
