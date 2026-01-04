@@ -53,9 +53,17 @@ public class CosmeticsRenderer {
 
 	public static void render(AbstractClientPlayerEntity player, MatrixStack matrices,
 							  VertexConsumerProvider vertexConsumers, int light,
-							  CosmeticsManager.PlayerCosmetics cosmetics) {
+							  CosmeticsManager.PlayerCosmetics cosmetics, Vec3d cameraPos) {
 
 		matrices.push();
+
+		// Calculate camera-relative position
+		double relX = player.getX() - cameraPos.x;
+		double relY = player.getY() - cameraPos.y;
+		double relZ = player.getZ() - cameraPos.z;
+
+		// Translate to player position (camera-relative)
+		matrices.translate(relX, relY, relZ);
 
 		// Render cape
 		if (cosmetics.hasCape()) {
@@ -87,10 +95,7 @@ public class CosmeticsRenderer {
 			renderCloak(player, matrices, vertexConsumers, light, cosmetics.cloak);
 		}
 
-		// Render aura
-		if (cosmetics.hasAura()) {
-			renderAura(player, matrices, vertexConsumers, light, cosmetics.aura);
-		}
+		// Note: Aura particles are rendered via ClientTickEvents, not here
 
 		matrices.pop();
 	}
@@ -100,25 +105,28 @@ public class CosmeticsRenderer {
 		// Get custom cape texture
 		Identifier capeTexture = Identifier.of("cosmeticsgalore", "textures/entity/capes/" + capeId + ".png");
 
-		// Simplified cape rendering without physics (deprecated fields removed in 1.21.10)
-		float capeY = 0.0F;
-		float capeSwing = 0.0F;
-		float capeStretch = 0.0F;
+		// Calculate cape animation based on player velocity and rotation
+		float yaw = player.getYaw();
+		Vec3d velocity = player.getVelocity();
+		float capeFlow = (float)(velocity.lengthSquared()) * 2.0F;
+		capeFlow = MathHelper.clamp(capeFlow, 0.0F, 1.0F);
 
-		if (capeSwing < 0.0F) {
-			capeSwing = 0.0F;
-		}
-
-		// Simple animation based on player age
-		capeY += MathHelper.sin(player.age * 0.067F) * 3.0F;
+		// Simple idle animation
+		float capeIdle = MathHelper.sin(player.age * 0.067F) * 0.05F;
 
 		matrices.push();
+
+		// Rotate to face away from player
+		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - yaw));
+
+		// Position cape behind player
 		matrices.translate(0.0F, 0.0F, 0.125F);
-		// Apply rotations using the peek().getPositionMatrix() method
+
+		// Apply cape flow based on movement
+		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(6.0F + capeFlow * 10.0F + capeIdle));
+
+		// Apply rotations using matrix stack
 		MatrixStack.Entry entry = matrices.peek();
-		entry.getPositionMatrix().rotate(RotationAxis.POSITIVE_X.rotationDegrees(6.0F + capeSwing / 2.0F + capeY));
-		entry.getPositionMatrix().rotate(RotationAxis.POSITIVE_Z.rotationDegrees(capeStretch / 2.0F));
-		entry.getPositionMatrix().rotate(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - capeStretch / 2.0F));
 
 		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntitySolid(capeTexture));
 		Matrix4f positionMatrix = entry.getPositionMatrix();
@@ -188,17 +196,6 @@ public class CosmeticsRenderer {
 		CosmeticsGalore.LOGGER.debug("Rendering cloak: {} for player {}", cloakId, player.getName().getString());
 	}
 
-	private static void renderAura(AbstractClientPlayerEntity player, MatrixStack matrices,
-								   VertexConsumerProvider vertexConsumers, int light, String auraId) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		ClientWorld world = client.world;
-		if (world == null || client.particleManager == null) return;
-
-		// Only spawn particles every few ticks to avoid lag
-		if (world.getTime() % 4 != 0) return;
-
-		spawnAuraParticles(player, world, client, auraId);
-	}
 
 	private static void spawnAuraParticles(AbstractClientPlayerEntity player, ClientWorld world, MinecraftClient client, String auraId) {
 		// Use player position directly
